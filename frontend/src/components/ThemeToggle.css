@@ -1,0 +1,41 @@
+.theme-toggle {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.toggle-track {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 2rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--card-border);
+  transition: all 0.3s ease;
+}
+
+.toggle-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.toggle-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.toggle-icon.active {
+  color: var(--accent-color);
+  transform: scale(1.1);
+}
