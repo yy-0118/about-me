@@ -60,15 +60,10 @@ const RagPageInner: React.FC<Props> = ({ onBack, onEnterAdmin }) => {
     }
   }
 
-  const startNewChat = async () => {
-    try {
-      const s = await createSession('新对话')
-      setCurrentId(s.id)
-      setMessages([])
-      setRefreshKey((k) => k + 1)
-    } catch {
-      // ignore
-    }
+  const startNewChat = () => {
+    setCurrentId(null)
+    setMessages([])
+    setRefreshKey((k) => k + 1)
   }
 
   const send = async (text: string) => {
