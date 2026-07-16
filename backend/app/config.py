@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-import os
 
 
 class Settings(BaseSettings):
@@ -38,6 +37,10 @@ class Settings(BaseSettings):
     # 文本分块
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 50
+
+    # 管理员鉴权
+    # 生产环境务必通过 .env 覆盖此值；默认值仅用于本地开发
+    ADMIN_PASSWORD: str = ""
 
     class Config:
         env_file = ".env"
