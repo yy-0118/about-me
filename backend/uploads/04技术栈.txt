@@ -1,0 +1,24 @@
+四、技术栈清单（开发 / AI / 设计 / 运维）
+1. 后端开发语言 & 框架
+编程语言：Python
+Web 框架：Flask、FastAPI
+数据库：MySQL、SQLite
+2. LLM & Agent & RAG 核心技术
+框架库：LangChain、LangGraph
+核心能力：RAG 全链路设计与调优、提示词工程、Agent 基础原理
+3. 常用代码 AI 工具
+Open code、Codex、Claude Code、zcode
+4. 接触使用过的大模型
+ChatGPT、Claude、通义千问、DeepSeek、Gemini、Kimi、Llama、GLM、GLM Mini、Mimo
+5. 平面 & 3D 设计软件（熟练使用）
+PS、AI、3ds Max、Blender
+6. 办公软件
+全套 Office
+7. 工程运维 & 版本工具
+版本控制：Git
+容器打包：Docker
+服务启动：Uvicorn
+反向代理：Nginx
+长期深耕方向：人工智能 AI 领域；
+后续重点学习研究方向：AIGC 技术、微信小程序项目落地开发；
+发展路线：以 RAG、Agent、大模型应用为核心，结合小程序开发实现 AI 产品商业化落地。

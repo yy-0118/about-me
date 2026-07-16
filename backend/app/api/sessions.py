@@ -1,11 +1,12 @@
 """
 会话 API
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
+from app.client_identity import get_client_identity
 from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
 from app.schemas.session import (
@@ -22,10 +23,15 @@ router = APIRouter(prefix="/api/chat/sessions", tags=["对话会话"])
 
 
 @router.post("", response_model=SessionResponse)
-async def create_session(payload: SessionCreate | None = None, db: AsyncSession = Depends(get_db)):
+async def create_session(
+    request: Request,
+    payload: SessionCreate | None = None,
+    db: AsyncSession = Depends(get_db),
+):
     """新建会话"""
     title = (payload.title if payload else None) or "新对话"
-    session = ChatSession(title=title)
+    client_id, client_ip = get_client_identity(request)
+    session = ChatSession(title=title, client_id=client_id, client_ip=client_ip)
     db.add(session)
     await db.commit()
     await db.refresh(session)
@@ -33,17 +39,28 @@ async def create_session(payload: SessionCreate | None = None, db: AsyncSession 
 
 
 @router.get("", response_model=SessionListResponse)
-async def list_sessions(db: AsyncSession = Depends(get_db)):
-    """列出所有会话，按更新时间倒序"""
-    result = await db.execute(select(ChatSession).order_by(ChatSession.updated_at.desc()))
+async def list_sessions(request: Request, db: AsyncSession = Depends(get_db)):
+    """列出当前设备/IP 的会话，按更新时间倒序"""
+    client_id, _ = get_client_identity(request)
+    result = await db.execute(
+        select(ChatSession)
+        .where(ChatSession.client_id == client_id)
+        .order_by(ChatSession.updated_at.desc())
+    )
     items = list(result.scalars().all())
     return SessionListResponse(total=len(items), items=items)
 
 
 @router.get("/{session_id}", response_model=SessionDetail)
-async def get_session(session_id: int, db: AsyncSession = Depends(get_db)):
+async def get_session(session_id: int, request: Request, db: AsyncSession = Depends(get_db)):
     """加载会话 + 所有消息"""
-    s_result = await db.execute(select(ChatSession).where(ChatSession.id == session_id))
+    client_id, _ = get_client_identity(request)
+    s_result = await db.execute(
+        select(ChatSession).where(
+            ChatSession.id == session_id,
+            ChatSession.client_id == client_id,
+        )
+    )
     session = s_result.scalar_one_or_none()
     if not session:
         raise HTTPException(404, "会话不存在")
@@ -87,23 +104,37 @@ async def get_session(session_id: int, db: AsyncSession = Depends(get_db)):
 async def update_session(
     session_id: int,
     payload: SessionUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """修改会话标题"""
-    result = await db.execute(select(ChatSession).where(ChatSession.id == session_id))
+    client_id, client_ip = get_client_identity(request)
+    result = await db.execute(
+        select(ChatSession).where(
+            ChatSession.id == session_id,
+            ChatSession.client_id == client_id,
+        )
+    )
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(404, "会话不存在")
     session.title = payload.title
+    session.client_ip = client_ip
     await db.commit()
     await db.refresh(session)
     return session
 
 
 @router.delete("/{session_id}", response_model=DeleteResponse)
-async def delete_session(session_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_session(session_id: int, request: Request, db: AsyncSession = Depends(get_db)):
     """删除会话（级联删除消息）"""
-    result = await db.execute(select(ChatSession).where(ChatSession.id == session_id))
+    client_id, _ = get_client_identity(request)
+    result = await db.execute(
+        select(ChatSession).where(
+            ChatSession.id == session_id,
+            ChatSession.client_id == client_id,
+        )
+    )
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(404, "会话不存在")

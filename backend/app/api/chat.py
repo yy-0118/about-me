@@ -1,13 +1,14 @@
 """
 流式问答（支持会话持久化）
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sse_starlette.sse import EventSourceResponse
 import json
 
 from app.database import get_db
+from app.client_identity import get_client_identity
 from app.schemas.chat import ChatRequest, ChatSource
 from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
@@ -25,13 +26,14 @@ def _auto_title(question: str, max_len: int = 30) -> str:
 
 
 @router.post("")
-async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
+async def chat(payload: ChatRequest, request: Request, db: AsyncSession = Depends(get_db)):
     """流式问答（可选 session 持久化）"""
-    if not request.question.strip():
+    if not payload.question.strip():
         raise HTTPException(400, "问题不能为空")
+    client_id, client_ip = get_client_identity(request)
 
     runtime = await get_all_runtime_settings(db)
-    top_k = request.top_k or runtime["top_k"]
+    top_k = payload.top_k or runtime["top_k"]
     temperature = runtime["temperature"]
     llm_model = runtime["llm_model"]
     system_prompt = runtime["system_prompt"]
@@ -41,13 +43,17 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     embedding_model = runtime["embedding_model"]
 
     session: ChatSession | None = None
-    if request.session_id is not None:
+    if payload.session_id is not None:
         result = await db.execute(
-            select(ChatSession).where(ChatSession.id == request.session_id)
+            select(ChatSession).where(
+                ChatSession.id == payload.session_id,
+                ChatSession.client_id == client_id,
+            )
         )
         session = result.scalar_one_or_none()
         if not session:
             raise HTTPException(404, "会话不存在")
+        session.client_ip = client_ip
 
     embed_service = EmbeddingService(
         api_key=runtime["embedding_api_key"],
@@ -59,13 +65,13 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
         api_key=api_key, base_url=base_url, model=llm_model
     )
 
-    # 1. 检索
-    results = await search_service.search(db, request.question, top_k)
-    if not results:
-        async def empty_gen():
-            yield {"event": "message", "data": json.dumps({"type": "chunk", "content": "未在文档中找到相关信息。"})}
-            yield {"event": "message", "data": json.dumps({"type": "done"})}
-        return EventSourceResponse(empty_gen())
+    # 1. Search the knowledge base when embeddings are available. If the
+    # embedding provider is not configured or unavailable, fall back to a
+    # normal LLM chat instead of failing the whole request.
+    try:
+        results = await search_service.search(db, payload.question, top_k)
+    except Exception:
+        results = []
 
     sources = [
         ChatSource(
@@ -94,7 +100,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     async def event_generator():
         # 3.1 落库 user 消息
         if session is not None:
-            user_msg = ChatMessage(session_id=session.id, role="user", content=request.question)
+            user_msg = ChatMessage(session_id=session.id, role="user", content=payload.question)
             db.add(user_msg)
             await db.commit()
             await db.refresh(user_msg)
@@ -103,7 +109,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
                 select(ChatMessage).where(ChatMessage.session_id == session.id)
             )
             if len(list(count_result.scalars().all())) == 1:
-                session.title = _auto_title(request.question)
+                session.title = _auto_title(payload.question)
                 await db.commit()
 
         # 3.2 发送 sources
@@ -115,7 +121,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
         # 3.3 累积助手回答
         assistant_buf: list[str] = []
         async for chunk_json in llm_service.chat_stream(
-            question=request.question,
+            question=payload.question,
             context_texts=context_texts,
             history=history,
             system_prompt_override=system_prompt,

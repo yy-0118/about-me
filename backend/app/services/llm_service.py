@@ -46,12 +46,17 @@ class LLMService:
 
         style_prefix = self._style_prefix(ai_style)
         # 始终把检索到的内容追加到 system prompt 后面（无论是否自定义）
-        base_system = system_prompt_override or (
-            "你是一个知识库问答助手。请基于以下检索到的文档内容回答用户问题。\n"
-            "如果你不确定答案，请如实说不知道，不要编造。\n"
-            "引用相关文档内容来支持你的回答。\n"
-            "请用中文回答。\n"
-        )
+        if context:
+            base_system = system_prompt_override or (
+                "你是一个知识库问答助手。请基于以下检索到的文档内容回答用户问题。\n"
+                "如果你不确定答案，请如实说不知道，不要编造。\n"
+                "引用相关文档内容来支持你的回答。\n"
+                "请用中文回答。\n"
+            )
+        else:
+            base_system = (
+                "你是一个中文 AI 助手。请直接回答用户问题；如果问题需要知识库资料但当前没有可用检索结果，请说明需要先上传或配置可检索的文档。"
+            )
         if context:
             base_system = f"{base_system}\n\n检索到的相关内容：\n{context}"
         system_prompt = f"{style_prefix}{base_system}" if style_prefix else base_system

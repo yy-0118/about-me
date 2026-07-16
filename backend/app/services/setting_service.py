@@ -14,7 +14,7 @@ from app.config import get_settings
 DEFAULT_SETTINGS = {
     "temperature": "0.3",
     "top_k": "5",
-    "llm_model": "deepseek-v4-flash",
+    "llm_model": "deepseek-chat",
     "system_prompt": "你是一个知识库问答助手。请基于以下检索到的文档内容回答用户问题。如果你不确定答案，请如实说不知道，不要编造。引用相关文档内容来支持你的回答。请用中文回答。",
     "deepseek_base_url": "https://api.deepseek.com",
     "embedding_model": "deepseek-embedding",
