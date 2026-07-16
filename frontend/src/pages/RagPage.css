@@ -1,121 +1,45 @@
 .rag-page {
   width: 100%;
   height: 100%;
-  position: relative;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-primary);
-  padding: 2rem;
-  overflow-y: auto;
-  font-family: var(--font-sans);
-  transition: opacity 0.55s ease-out, transform 0.55s ease-out;
+  background: var(--bg-app);
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .rag-page--enter {
   opacity: 0;
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
 .rag-page--exit {
   opacity: 0;
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
-.rag-header {
-  text-align: center;
-  margin-bottom: 3rem;
-  margin-top: 2rem;
+.rag-page__body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
 }
 
-.rag-title {
-  font-family: var(--font-sans);
-  font-size: 2.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.05rem;
-}
-
-.rag-subtitle {
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  color: var(--text-secondary);
-  font-weight: 300;
-  letter-spacing: 0.05rem;
-}
-
-.steps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
-  width: 100%;
-  margin-bottom: 3rem;
-}
-
-.step-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
-  padding: 2rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.step-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.step-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent-color);
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.step-title {
-  font-family: var(--font-sans);
-  font-size: 1.5rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-bottom: 0.75rem;
-}
-
-.step-description {
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  font-weight: 400;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.rag-footer {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 300;
+.rag-page__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg-app);
 }
 
 @media (max-width: 768px) {
-  .rag-title {
-    font-size: 1.8rem;
+  .rag-page__body {
+    flex-direction: row;
   }
 
-  .steps-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .step-card {
-    padding: 1.5rem;
+  .rag-page__main {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
   }
 }

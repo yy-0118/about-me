@@ -14,7 +14,14 @@ def get_db_url() -> str:
         return f"sqlite+aiosqlite:///{s.SQLITE_PATH}"
 
 
-engine = create_async_engine(get_db_url(), echo=False, pool_size=5, max_overflow=10)
+def _engine_kwargs() -> dict:
+    s = get_settings()
+    if s.DB_TYPE == "mysql":
+        return {"pool_size": 5, "max_overflow": 10}
+    return {"connect_args": {"check_same_thread": False}}
+
+
+engine = create_async_engine(get_db_url(), echo=False, **_engine_kwargs())
 
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -32,3 +39,4 @@ async def init_db():
     from app.models import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+

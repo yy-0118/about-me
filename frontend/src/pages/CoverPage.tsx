@@ -6,6 +6,8 @@ type Label = {
   text: string
   x: number
   y: number
+  hideStart?: number
+  hideEnd?: number
 }
 
 type LineStyle = {
@@ -16,20 +18,26 @@ type LineStyle = {
 const CENTER_X = 50
 const CENTER_Y = 53
 
+/**
+ * 每条线的两端遮罩距离(单位 px),用于在 mask-image 渐变中让两端透明。
+ *   hideStart: 起点端(中心/About me 方向)隐藏距离,加大 → 离 About me 更远
+ *   hideEnd:   终点端(文字方向)隐藏距离,加大 → 离文字更远;默认 0 → 精确对齐文字中点
+ * 不写则 fallback 到 CSS 默认 40 / 0。
+ */
 const labels: Label[] = [
-  { text: '性格', x: 16.8, y: 10.1 },
-  { text: '美食', x: 49.2, y: 7.4 },
-  { text: '校园经历', x: 87.3, y: 8.5 },
-  { text: '音乐', x: 10.8, y: 33.5 },
-  { text: '爱好', x: 63.8, y: 28.7 },
-  { text: '项目经历', x: 91.5, y: 34.0 },
-  { text: '职业规划', x: 90.8, y: 55.9 },
-  { text: 'MBTI', x: 70.8, y: 65.4 },
-  { text: '联系方式', x: 49.6, y: 72.9 },
-  { text: '社交', x: 91.5, y: 81.9 },
-  { text: '体质特征', x: 50.4, y: 85.1 },
-  { text: '星座', x: 29.2, y: 86.7 },
-  { text: '特长', x: 16.5, y: 71.3 },
+  { text: '性格', x: 30, y: 15, hideStart: 100, hideEnd: 10 },
+  { text: '口味', x: 49.2, y: 7.4, hideStart: 65, hideEnd: 10 },
+  { text: '校园经历', x: 87.3, y: 8.5, hideStart: 120, hideEnd:20 },
+  { text: '音乐品味', x: 8, y: 20, hideStart: 220, hideEnd: 15 },
+  { text: '爱好', x: 60, y: 28.7, hideStart: 100, hideEnd: 18 },
+  { text: '项目经历', x: 91.5, y: 34.0, hideStart: 255, hideEnd: 30 },
+  { text: '职业规划', x: 90.8, y: 65, hideStart: 110, hideEnd: 33 },
+  { text: 'MBTI', x: 70.8, y: 65.4, hideStart: 100, hideEnd: 20 },
+  { text: '联系方式', x: 49.6, y: 72.9, hideStart: 32, hideEnd: 10 },
+  { text: '社交', x: 70, y: 81.9, hideStart: 70, hideEnd: 18 },
+  { text: '体质特征', x: 58, y: 85.1, hideStart: 50, hideEnd: 10 },
+  { text: '星座', x: 29.2, y: 86.7, hideStart: 55, hideEnd: 10 },
+  { text: '特长', x: 16.5, y: 65, hideStart: 105, hideEnd: 19 },
 ]
 
 const computeLineStyles = (): LineStyle[] => {
@@ -72,7 +80,7 @@ export const CoverPage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
   const handleClick = () => {
     if (!ready || phase === 'exit') return
     setPhase('exit')
-    window.setTimeout(onEnter, 950)
+    window.setTimeout(onEnter, 1550)
   }
 
   return (
@@ -96,7 +104,13 @@ export const CoverPage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
           >
             <div
               className="cover-line-inner"
-              style={{ width: lineStyles[i]?.len ?? '0px' }}
+              style={
+                {
+                  width: lineStyles[i]?.len ?? '0px',
+                  '--hide-start': `${label.hideStart ?? 40}px`,
+                  '--hide-end': `${label.hideEnd ?? 0}px`,
+                } as React.CSSProperties
+              }
             />
           </div>
         ))}
@@ -104,7 +118,7 @@ export const CoverPage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
 
       <div className="cover-center">
         <h1 className="cover-title">About me</h1>
-        <p className="cover-hint">(点此处进入问答)</p>
+        <p className="cover-hint">(点击任意处进入问答页)</p>
       </div>
 
       {labels.map((label, i) => {

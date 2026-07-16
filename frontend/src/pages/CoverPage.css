@@ -29,10 +29,25 @@
 }
 
 .cover-line-inner {
-  height: 1.2px;
+  height: 1.48px;
   background: rgba(20, 20, 20, 0.6);
   transform-origin: 0 50%;
   transform: scaleX(0);
+  /* 两端透明遮罩:起点端(中心方向)透明 --hide-start,终点端(文字方向)透明 --hide-end,中间可见。
+     --hide-end 默认 0:线条精确对齐 label 位置(文字中点);加大则留间距。
+     两个变量由 CoverPage.tsx 的 labels 数组通过 inline style 单独传入。 */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0 var(--hide-start, 40px),
+    black var(--hide-start, 40px) calc(100% - var(--hide-end, 0px)),
+    transparent calc(100% - var(--hide-end, 0px)) 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0 var(--hide-start, 40px),
+    black var(--hide-start, 40px) calc(100% - var(--hide-end, 0px)),
+    transparent calc(100% - var(--hide-end, 0px)) 100%
+  );
   animation: cover-line-grow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   animation-delay: var(--line-delay, 0.6s);
   transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
@@ -62,6 +77,10 @@
   color: #0a0a0a;
   letter-spacing: 0.01em;
   line-height: 1;
+  text-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.22),
+    0 4px 10px rgba(0, 0, 0, 0.16),
+    0 1px 2px rgba(0, 0, 0, 0.12);
   opacity: 0;
   transform: scale(0.96);
   animation: cover-title-in 0.9s ease-out forwards;
@@ -95,7 +114,7 @@
   transform: translate(-50%, -50%);
   font-family: var(--font-sans);
   font-size: 1.05rem;
-  font-weight: 500;
+  font-weight: 540;
   color: #0a0a0a;
   white-space: nowrap;
   opacity: 0;
@@ -136,14 +155,11 @@
 }
 
 .cover-page.phase-exit .cover-line-inner {
-  animation: none;
-  transform: scaleX(0);
+  animation: cover-line-exit 1.5s cubic-bezier(0.55, 0, 0.6, 0.4) forwards;
 }
 
 .cover-page.phase-exit .cover-label {
-  animation: none;
-  opacity: 0;
-  transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
+  animation: cover-label-exit 1.5s cubic-bezier(0.55, 0, 0.6, 0.4) forwards;
 }
 
 .cover-page.phase-exit .cover-label-inner {
@@ -152,16 +168,106 @@
 
 .cover-page.phase-exit .cover-title,
 .cover-page.phase-exit .cover-hint {
-  animation: none;
-  opacity: 0;
-  transform: scale(0.96);
+  animation: cover-center-fade 1.5s ease-out forwards;
+}
+
+@keyframes cover-line-exit {
+  from {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  to {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+}
+
+@keyframes cover-label-exit {
+  from {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  to {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
+    opacity: 0;
+  }
+}
+
+@keyframes cover-center-fade {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
 @media (max-width: 768px) {
-  .cover-label {
-    font-size: 0.9rem;
+  .cover-page {
+    min-height: 100dvh;
+    background-size: cover;
+    background-position: center center;
+    background-color: #f1efe8;
   }
+
+  .cover-lines,
+  .cover-label {
+    display: none;
+  }
+
+  .cover-center {
+    top: 50%;
+    width: min(88vw, 360px);
+  }
+
+  .cover-title {
+    font-size: clamp(2.7rem, 15vw, 4.2rem);
+    line-height: 0.95;
+  }
+
   .cover-hint {
-    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.8rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+  }
+}
+
+@media (max-width: 480px) {
+  .cover-center {
+    top: 50%;
+  }
+
+  .cover-title {
+    font-size: clamp(2.8rem, 16vw, 4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-line-inner,
+  .cover-title,
+  .cover-hint,
+  .cover-label,
+  .cover-label-inner,
+  .cover-page.phase-exit .cover-line-inner,
+  .cover-page.phase-exit .cover-label,
+  .cover-page.phase-exit .cover-title,
+  .cover-page.phase-exit .cover-hint {
+    animation: none;
+    transition: none;
+  }
+
+  .cover-title,
+  .cover-hint {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .cover-label {
+    opacity: 1;
+    transform: translate(-50%, -50%);
   }
 }

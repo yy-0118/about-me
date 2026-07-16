@@ -1,0 +1,126 @@
+.topbar {
+  height: 52px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.topbar__icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.topbar__icon:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .topbar__icon:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.topbar__menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  min-width: 180px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 50;
+  animation: menuIn 0.15s ease-out;
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.topbar__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s;
+}
+
+.topbar__menu-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme='dark'] .topbar__menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.topbar__menu-item svg {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    height: auto;
+    min-height: 52px;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .topbar__left {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .topbar__icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .topbar__icon span {
+    display: none;
+  }
+
+  .topbar__menu {
+    right: 0;
+    min-width: min(220px, calc(100vw - 24px));
+  }
+}

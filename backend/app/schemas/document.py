@@ -24,3 +24,10 @@ class DocumentListResponse(BaseModel):
 # -------- 删除结果 --------
 class DeleteResponse(BaseModel):
     message: str
+
+
+class DocumentPreviewResponse(BaseModel):
+    id: int
+    filename: str
+    file_type: str
+    content: str
