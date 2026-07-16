@@ -1,5 +1,4 @@
 *.log
-uvi.*
 *.tar.gz
 dist/
 node_modules/
@@ -8,3 +7,14 @@ venv/
 __pycache__/
 *.pyc
 .DS_Store
+
+# IDE
+.idea/
+backend/.idea/
+frontend/.idea/
+
+# Environment
+backend/.env
+
+# Build artifacts
+frontend/tsconfig.tsbuildinfo
