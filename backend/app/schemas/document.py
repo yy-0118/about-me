@@ -31,3 +31,7 @@ class DocumentPreviewResponse(BaseModel):
     filename: str
     file_type: str
     content: str
+
+
+class DocumentContentUpdate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=100000, description="文档新内容（纯文本）")

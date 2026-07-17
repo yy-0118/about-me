@@ -3,7 +3,7 @@
 """
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 
 from app.database import get_db
 from app.client_identity import get_client_identity
@@ -20,6 +20,14 @@ from app.schemas.session import (
 )
 
 router = APIRouter(prefix="/api/chat/sessions", tags=["对话会话"])
+
+
+def _same_client_or_null(client_id: str):
+    """兼容旧数据：匹配指定 client_id 或 client_id 为 NULL 的记录"""
+    return or_(
+        ChatSession.client_id == client_id,
+        ChatSession.client_id.is_(None),
+    )
 
 
 @router.post("", response_model=SessionResponse)
@@ -40,11 +48,11 @@ async def create_session(
 
 @router.get("", response_model=SessionListResponse)
 async def list_sessions(request: Request, db: AsyncSession = Depends(get_db)):
-    """列出当前设备/IP 的会话，按更新时间倒序"""
+    """列出当前设备/IP 的会话（含旧版无 client_id 的会话），按更新时间倒序"""
     client_id, _ = get_client_identity(request)
     result = await db.execute(
         select(ChatSession)
-        .where(ChatSession.client_id == client_id)
+        .where(_same_client_or_null(client_id))
         .order_by(ChatSession.updated_at.desc())
     )
     items = list(result.scalars().all())
@@ -58,7 +66,7 @@ async def get_session(session_id: int, request: Request, db: AsyncSession = Depe
     s_result = await db.execute(
         select(ChatSession).where(
             ChatSession.id == session_id,
-            ChatSession.client_id == client_id,
+            _same_client_or_null(client_id),
         )
     )
     session = s_result.scalar_one_or_none()
@@ -112,7 +120,7 @@ async def update_session(
     result = await db.execute(
         select(ChatSession).where(
             ChatSession.id == session_id,
-            ChatSession.client_id == client_id,
+            _same_client_or_null(client_id),
         )
     )
     session = result.scalar_one_or_none()
@@ -120,6 +128,8 @@ async def update_session(
         raise HTTPException(404, "会话不存在")
     session.title = payload.title
     session.client_ip = client_ip
+    if session.client_id is None:
+        session.client_id = client_id
     await db.commit()
     await db.refresh(session)
     return session
@@ -132,7 +142,7 @@ async def delete_session(session_id: int, request: Request, db: AsyncSession = D
     result = await db.execute(
         select(ChatSession).where(
             ChatSession.id == session_id,
-            ChatSession.client_id == client_id,
+            _same_client_or_null(client_id),
         )
     )
     session = result.scalar_one_or_none()

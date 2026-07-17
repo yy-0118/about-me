@@ -97,6 +97,14 @@ export async function previewDocument(id: number): Promise<DocumentPreview> {
   return request<DocumentPreview>(`/api/documents/${id}/preview`, {}, true)
 }
 
+export async function updateDocumentContent(id: number, content: string): Promise<DocumentPreview> {
+  return request<DocumentPreview>(
+    `/api/documents/${id}/content`,
+    { method: 'PUT', body: JSON.stringify({ content }) },
+    true,
+  )
+}
+
 export async function listSessions(): Promise<SessionListResponse> {
   return request<SessionListResponse>('/api/chat/sessions')
 }

@@ -19,6 +19,10 @@ export interface DocumentPreview {
   content: string
 }
 
+export interface DocumentContentUpdate {
+  content: string
+}
+
 export interface ChatSource {
   document_name: string
   chunk_text: string

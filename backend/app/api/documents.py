@@ -11,7 +11,7 @@ from app.models.chunk import Chunk
 from app.services.document_processor import extract_text, chunk_text, is_supported
 from app.services.embedding_service import EmbeddingService
 from app.services.setting_service import get_all_runtime_settings
-from app.schemas.document import DocumentResponse, DocumentListResponse, DeleteResponse, DocumentPreviewResponse
+from app.schemas.document import DocumentResponse, DocumentListResponse, DeleteResponse, DocumentPreviewResponse, DocumentContentUpdate
 from app.auth import require_admin
 
 router = APIRouter(prefix="/api/documents", tags=["文档管理"])
@@ -108,6 +108,67 @@ async def preview_document(doc_id: int, db: AsyncSession = Depends(get_db)):
         filename=doc.filename,
         file_type=doc.file_type,
         content=content,
+    )
+
+
+@router.put("/{doc_id}/content", response_model=DocumentPreviewResponse, dependencies=[Depends(require_admin)])
+async def update_document_content(
+    doc_id: int, payload: DocumentContentUpdate, db: AsyncSession = Depends(get_db)
+):
+    """在线修改文档内容：重写文件 → 重新分块 → 重新生成向量"""
+    from sqlalchemy import select, delete
+
+    result = await db.execute(select(Document).where(Document.id == doc_id))
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(404, "文档不存在")
+
+    # 1. 重写文件
+    new_text = payload.content
+    os.makedirs(os.path.dirname(doc.file_path) or ".", exist_ok=True)
+    with open(doc.file_path, "w", encoding="utf-8") as f:
+        f.write(new_text)
+
+    # 2. 删除旧 chunks（ondelete CASCADE 不自动触发 delete，手动删）
+    await db.execute(delete(Chunk).where(Chunk.document_id == doc.id))
+
+    # 3. 重新分块
+    settings = get_settings()
+    chunks = chunk_text(new_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
+
+    # 4. 重新生成向量
+    runtime = await get_all_runtime_settings(db)
+    embed_service = EmbeddingService(
+        api_key=runtime["embedding_api_key"],
+        base_url=runtime["embedding_base_url"],
+        model=runtime["embedding_model"],
+    )
+    import json
+    for i, text in enumerate(chunks):
+        try:
+            embedding = await embed_service.embed(text)
+        except Exception:
+            embedding = []
+        chunk = Chunk(
+            document_id=doc.id,
+            chunk_index=i,
+            chunk_text=text,
+            embedding=json.dumps(embedding) if embedding else None,
+            metadata_json=json.dumps({"chunk_index": i, "source": "inline-edit"}, ensure_ascii=False),
+        )
+        db.add(chunk)
+
+    # 5. 更新文档记录
+    doc.chunk_count = len(chunks)
+    doc.file_size = len(new_text.encode("utf-8"))
+    await db.commit()
+    await db.refresh(doc)
+
+    return DocumentPreviewResponse(
+        id=doc.id,
+        filename=doc.filename,
+        file_type=doc.file_type,
+        content=new_text,
     )
 
 

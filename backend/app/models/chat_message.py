@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, func, Index
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from app.models import Base
 
 
@@ -18,7 +18,11 @@ class ChatMessage(Base):
     sources = Column(Text, nullable=True, comment="引用来源 JSON")
     created_at = Column(DateTime, server_default=func.now(), comment="创建时间")
 
-    session = relationship("ChatSession", backref="messages")
+    session = relationship(
+        "ChatSession",
+        backref=backref("messages", cascade="all, delete-orphan"),
+        passive_deletes=True,
+    )
 
     __table_args__ = (
         Index("idx_chat_messages_session_created", "session_id", "created_at"),

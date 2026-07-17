@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { deleteDocument, listDocuments, previewDocument, uploadDocument } from '../../../lib/api'
+import { deleteDocument, listDocuments, previewDocument, updateDocumentContent, uploadDocument } from '../../../lib/api'
 import type { DocumentItem, DocumentPreview } from '../../../lib/types'
 
 interface Props {
@@ -34,6 +34,10 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
   const [preview, setPreview] = useState<DocumentPreview | null>(null)
   const [previewLoadingId, setPreviewLoadingId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
+  const [savingEdit, setSavingEdit] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const reload = async () => {
@@ -82,6 +86,48 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const handleEdit = async (id: number) => {
+    setEditingId(id)
+    setEditContent('')
+    setEditLoading(true)
+    setError('')
+    setSuccess('')
+    try {
+      const resp = await previewDocument(id)
+      setEditContent(resp.content)
+    } catch (e: any) {
+      setError(e?.message || '加载文档内容失败')
+      setEditingId(null)
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editContent.trim()) return
+    setSavingEdit(true)
+    setError('')
+    setSuccess('')
+    try {
+      await updateDocumentContent(editingId, editContent)
+      setSuccess('文档内容已更新，已重新索引')
+      setEditingId(null)
+      setEditContent('')
+      await reload()
+      onChanged?.()
+    } catch (e: any) {
+      setError(e?.message || '保存失败')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    if (editContent && !window.confirm('放弃编辑？未保存的内容将丢失')) return
+    setEditingId(null)
+    setEditContent('')
   }
 
   const handlePreview = async (id: number) => {
@@ -205,6 +251,13 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
                     {previewLoadingId === d.id ? '加载中' : '预览'}
                   </button>
                   <button
+                    className="doc-item__edit"
+                    onClick={() => handleEdit(d.id)}
+                    disabled={editingId === d.id}
+                  >
+                    {editingId === d.id ? '编辑中' : '编辑'}
+                  </button>
+                  <button
                     className="doc-item__del"
                     onClick={() => handleDelete(d.id)}
                     disabled={deletingId === d.id}
@@ -240,6 +293,53 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
             <pre className="doc-preview__content">
               {preview.content.trim() || '该文档暂未解析出可预览文本。'}
             </pre>
+          </div>
+        </div>
+      )}
+
+      {editingId && (
+        <div className="doc-preview" role="dialog" aria-modal="true" aria-label="文档编辑">
+          <div className="doc-preview__panel doc-preview__panel--edit">
+            <div className="doc-preview__head">
+              <div className="doc-preview__title-wrap">
+                <div className="doc-preview__eyebrow">编辑文档</div>
+                <h3 className="doc-preview__title">{docs.find((d) => d.id === editingId)?.filename || ''}</h3>
+              </div>
+              <button className="doc-preview__close" onClick={handleCancelEdit} aria-label="关闭编辑">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
+            {editLoading ? (
+              <div className="doc-preview__loading">加载中…</div>
+            ) : (
+              <textarea
+                className="doc-preview__editor"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                placeholder="在此编辑文档内容…"
+              />
+            )}
+            {!editLoading && (
+              <div className="doc-preview__actions">
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  {editContent.length} 字 · 保存后会自动重新分块并生成向量
+                </span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="admin-btn" onClick={handleCancelEdit} disabled={savingEdit}>
+                    取消
+                  </button>
+                  <button
+                    className="admin-btn admin-btn--primary"
+                    onClick={handleSaveEdit}
+                    disabled={savingEdit || !editContent.trim()}
+                  >
+                    {savingEdit ? '保存中…' : '保存修改'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
