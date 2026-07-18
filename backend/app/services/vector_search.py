@@ -101,6 +101,11 @@ class VectorSearchService:
                 ))
 
         results.sort(key=lambda r: r.score, reverse=True)
+        # 归一化到 0-1（与余弦相似度保持一致）
+        max_score = results[0].score if results else 0
+        if max_score > 0:
+            for r in results:
+                r.score = round(r.score / max_score, 4)
         return results[:top_k]
 
     @staticmethod

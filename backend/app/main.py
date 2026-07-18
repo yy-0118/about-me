@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
+from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.database import init_db
@@ -32,6 +33,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # 健康检查
+    @app.get("/health")
+    async def health():
+        return JSONResponse({"status": "ok"})
 
     # 注册路由
     from app.api import documents, chat, sessions, settings, auth, admin
