@@ -26,14 +26,19 @@ def _auto_title(question: str, max_len: int = 30) -> str:
 
 
 @router.post("")
-async def chat(payload: ChatRequest, request: Request, db: AsyncSession = Depends(get_db)):
+async def chat(
+    http_request: Request,
+    chat_data: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+):
     """流式问答（可选 session 持久化）"""
-    if not payload.question.strip():
+    if not chat_data.question.strip():
         raise HTTPException(400, "问题不能为空")
-    client_id, client_ip = get_client_identity(request)
+
+    client_id, client_ip = get_client_identity(http_request)
 
     runtime = await get_all_runtime_settings(db)
-    top_k = payload.top_k or runtime["top_k"]
+    top_k = chat_data.top_k or runtime["top_k"]
     temperature = runtime["temperature"]
     llm_model = runtime["llm_model"]
     system_prompt = runtime["system_prompt"]
@@ -43,10 +48,10 @@ async def chat(payload: ChatRequest, request: Request, db: AsyncSession = Depend
     embedding_model = runtime["embedding_model"]
 
     session: ChatSession | None = None
-    if payload.session_id is not None:
+    if chat_data.session_id is not None:
         result = await db.execute(
             select(ChatSession).where(
-                ChatSession.id == payload.session_id,
+                ChatSession.id == chat_data.session_id,
                 ChatSession.client_id == client_id,
             )
         )
@@ -69,7 +74,7 @@ async def chat(payload: ChatRequest, request: Request, db: AsyncSession = Depend
     # embedding provider is not configured or unavailable, fall back to a
     # normal LLM chat instead of failing the whole request.
     try:
-        results = await search_service.search(db, payload.question, top_k)
+        results = await search_service.search(db, chat_data.question, top_k)
     except Exception:
         results = []
 
@@ -100,7 +105,7 @@ async def chat(payload: ChatRequest, request: Request, db: AsyncSession = Depend
     async def event_generator():
         # 3.1 落库 user 消息
         if session is not None:
-            user_msg = ChatMessage(session_id=session.id, role="user", content=payload.question)
+            user_msg = ChatMessage(session_id=session.id, role="user", content=chat_data.question)
             db.add(user_msg)
             await db.commit()
             await db.refresh(user_msg)
@@ -109,7 +114,7 @@ async def chat(payload: ChatRequest, request: Request, db: AsyncSession = Depend
                 select(ChatMessage).where(ChatMessage.session_id == session.id)
             )
             if len(list(count_result.scalars().all())) == 1:
-                session.title = _auto_title(payload.question)
+                session.title = _auto_title(chat_data.question)
                 await db.commit()
 
         # 3.2 发送 sources
@@ -121,7 +126,7 @@ async def chat(payload: ChatRequest, request: Request, db: AsyncSession = Depend
         # 3.3 累积助手回答
         assistant_buf: list[str] = []
         async for chunk_json in llm_service.chat_stream(
-            question=payload.question,
+            question=chat_data.question,
             context_texts=context_texts,
             history=history,
             system_prompt_override=system_prompt,

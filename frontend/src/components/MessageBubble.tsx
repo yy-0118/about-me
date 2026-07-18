@@ -63,6 +63,7 @@ export const MessageBubble: React.FC<Props> = ({ message, onRegenerate, onCopy }
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
           ) : message.streaming ? (
             <span className="bubble-assistant__thinking">
+              <span className="bubble-assistant__thinking-text">正在检索知识库…</span>
               <span className="dot" />
               <span className="dot" />
               <span className="dot" />

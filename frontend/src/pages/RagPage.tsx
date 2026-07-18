@@ -81,11 +81,10 @@ const RagPageInner: React.FC<Props> = ({ onBack, onEnterAdmin }) => {
       }
     }
 
-    const userMsg: Message = { role: 'user', content: text }
     const asstId = `asst-${Date.now()}`
     setMessages((prev) => [
       ...prev,
-      userMsg,
+      { role: 'user', content: text } as Message,
       { id: asstId, role: 'assistant', content: '', streaming: true },
     ])
     setStreaming(true)
@@ -94,7 +93,6 @@ const RagPageInner: React.FC<Props> = ({ onBack, onEnterAdmin }) => {
     abortRef.current = ctrl
 
     try {
-      let first = true
       for await (const ev of chatStream(text, sessionId, ctrl.signal)) {
         if (import.meta.env.DEV) {
           // eslint-disable-next-line no-console
@@ -105,7 +103,6 @@ const RagPageInner: React.FC<Props> = ({ onBack, onEnterAdmin }) => {
             prev.map((m) => (m.id === asstId ? { ...m, sources: ev.sources! } : m)),
           )
         } else if (ev.type === 'chunk' && ev.content) {
-          if (first) first = false
           setMessages((prev) =>
             prev.map((m) =>
               m.id === asstId ? { ...m, content: m.content + ev.content! } : m,

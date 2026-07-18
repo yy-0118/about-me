@@ -19,6 +19,9 @@ class SearchResult:
         self.score = score
 
 
+MIN_SCORE_THRESHOLD = 0.15
+
+
 class VectorSearchService:
     def __init__(self, embedding_service: EmbeddingService):
         self.embedding = embedding_service
@@ -65,7 +68,7 @@ class VectorSearchService:
 
         # 4. 按相似度排序，取 top-k
         results.sort(key=lambda r: r.score, reverse=True)
-        if results:
+        if results and results[0].score >= MIN_SCORE_THRESHOLD:
             return results[:top_k]
         return self._keyword_search(rows, query, top_k)
 
@@ -106,6 +109,9 @@ class VectorSearchService:
         if max_score > 0:
             for r in results:
                 r.score = round(r.score / max_score, 4)
+        # 低于阈值返回空，前端显示"未找到相关信息"
+        if not results or results[0].score < MIN_SCORE_THRESHOLD:
+            return []
         return results[:top_k]
 
     @staticmethod

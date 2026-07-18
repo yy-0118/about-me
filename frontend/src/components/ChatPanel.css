@@ -215,8 +215,15 @@
 
 .bubble-assistant__thinking {
   display: inline-flex;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
   padding: 4px 0;
+}
+
+.bubble-assistant__thinking-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
 }
 
 .bubble-assistant__thinking .dot {
