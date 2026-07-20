@@ -144,11 +144,15 @@ async def update_document_content(
         model=runtime["embedding_model"],
     )
     import json
+    embed_ok = 0
     for i, text in enumerate(chunks):
         try:
             embedding = await embed_service.embed(text)
-        except Exception:
+            if embedding:
+                embed_ok += 1
+        except Exception as exc:
             embedding = []
+            print(f"[edit doc {doc.id}] embed chunk {i} failed: {exc}")
         chunk = Chunk(
             document_id=doc.id,
             chunk_index=i,
@@ -157,6 +161,8 @@ async def update_document_content(
             metadata_json=json.dumps({"chunk_index": i, "source": "inline-edit"}, ensure_ascii=False),
         )
         db.add(chunk)
+    if embed_ok == 0 and chunks:
+        print(f"[edit doc {doc.id}] WARNING: 0/{len(chunks)} chunks embedded - text saved but no vectors")
 
     # 5. 更新文档记录
     doc.chunk_count = len(chunks)
