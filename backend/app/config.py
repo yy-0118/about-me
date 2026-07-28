@@ -35,7 +35,9 @@ class Settings(BaseSettings):
     TOP_K: int = 5
 
     # 文本分块
-    CHUNK_SIZE: int = 500
+    # 调小到 300：教育经历 / 项目经验这类长段会被切成多片，每片语义更聚焦，
+    # 避免被联系方式这类"模板短串"在向量相似度上压制
+    CHUNK_SIZE: int = 300
     CHUNK_OVERLAP: int = 50
 
     # 管理员鉴权

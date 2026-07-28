@@ -2,6 +2,8 @@
 数据库连接管理
 支持 SQLite（本地开发）和 MySQL（生产）
 """
+from urllib.parse import quote_plus
+
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import inspect, text
 from app.config import get_settings
@@ -10,7 +12,12 @@ from app.config import get_settings
 def get_db_url() -> str:
     s = get_settings()
     if s.DB_TYPE == "mysql":
-        return f"mysql+aiomysql://{s.DB_USER}:{s.DB_PASSWORD}@{s.DB_HOST}:{s.DB_PORT}/{s.DB_NAME}?charset=utf8mb4"
+        user = quote_plus(s.DB_USER, safe="")
+        pwd = quote_plus(s.DB_PASSWORD, safe="")
+        return (
+            f"mysql+aiomysql://{user}:{pwd}@"
+            f"{s.DB_HOST}:{s.DB_PORT}/{s.DB_NAME}?charset=utf8mb4"
+        )
     else:
         return f"sqlite+aiosqlite:///{s.SQLITE_PATH}"
 

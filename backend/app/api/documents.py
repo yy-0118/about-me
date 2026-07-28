@@ -37,7 +37,8 @@ async def upload_document(file: UploadFile = File(...), db: AsyncSession = Depen
 
     # 提取文本 + 分块
     raw_text = extract_text(file_path)
-    chunks = chunk_text(raw_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
+    header = f"【{file.filename}】"
+    chunks = chunk_text(raw_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP, header=header)
 
     # 保存文档记录
     doc = Document(
@@ -134,7 +135,8 @@ async def update_document_content(
 
     # 3. 重新分块
     settings = get_settings()
-    chunks = chunk_text(new_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
+    header = f"【{doc.filename}】"
+    chunks = chunk_text(new_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP, header=header)
 
     # 4. 重新生成向量
     runtime = await get_all_runtime_settings(db)

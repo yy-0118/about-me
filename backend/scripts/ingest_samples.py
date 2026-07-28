@@ -46,7 +46,8 @@ async def ingest_one(path: Path, db, embed_service: EmbeddingService) -> dict:
         return {"file": filename, "ok": False, "error": "空文档，跳过"}
 
     settings = get_settings()
-    chunks_text = chunk_text(raw_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
+    header = f"【{filename}】"
+    chunks_text = chunk_text(raw_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP, header=header)
     if not chunks_text:
         return {"file": filename, "ok": False, "error": "分块结果为空"}
 
@@ -132,9 +133,85 @@ async def re_embed_all():
         print(f"\n完成：{ok} 成功，{fail} 失败")
 
 
+async def re_chunk_all():
+    """
+    删除所有 chunks 后，对每个文档按当前 chunk_text 规则重新分块 + 重新生成向量。
+    适用于 chunk_text 逻辑或 chunk_size 调整后。
+    """
+    from app.services.document_processor import chunk_text as _chunk_text
+    from app.config import get_settings as _get_settings
+    from sqlalchemy import delete as _delete
+
+    await init_db()
+    settings = _get_settings()
+
+    async with async_session() as db:
+        runtime = await get_all_runtime_settings(db)
+        embed_service = EmbeddingService(
+            api_key=runtime["embedding_api_key"],
+            base_url=runtime["embedding_base_url"],
+            model=runtime["embedding_model"],
+        )
+        print(f"Embedding 配置：base={runtime['embedding_base_url']}  model={runtime['embedding_model']}")
+        print(f"API key 已配置：{bool(runtime['embedding_api_key'])}\n")
+
+        if not runtime["embedding_api_key"]:
+            print("⚠ 未配置 embedding_api_key，无法重新生成向量")
+            return
+
+        docs = (await db.execute(select(Document).order_by(Document.id.asc()))).scalars().all()
+        if not docs:
+            print("数据库里还没有文档，无需 re-chunk")
+            return
+
+        print(f"准备对 {len(docs)} 个文档执行 re-chunk（清空旧 chunks → 按新规则重分 → 重新 embed）\n")
+
+        total_chunks = 0
+        for doc in docs:
+            try:
+                raw_text = extract_text(doc.file_path)
+            except Exception as e:
+                print(f"  ✗ doc#{doc.id} {doc.filename} 抽文本失败: {e}")
+                continue
+
+            await db.execute(_delete(Chunk).where(Chunk.document_id == doc.id))
+            header = f"【{doc.filename}】"
+            new_chunks = _chunk_text(
+                raw_text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP, header=header
+            )
+            if not new_chunks:
+                doc.chunk_count = 0
+                continue
+
+            ok = 0
+            for i, text in enumerate(new_chunks):
+                try:
+                    vec = await embed_service.embed(text)
+                except Exception:
+                    vec = []
+                if vec:
+                    ok += 1
+                db.add(Chunk(
+                    document_id=doc.id,
+                    chunk_index=i,
+                    chunk_text=text,
+                    embedding=json.dumps(vec) if vec else None,
+                    metadata_json=json.dumps({"chunk_index": i, "source": "re-chunk"}, ensure_ascii=False),
+                ))
+            doc.chunk_count = len(new_chunks)
+            total_chunks += len(new_chunks)
+            print(f"  ✓ doc#{doc.id} {doc.filename}: 旧 → 新 {len(new_chunks)} chunks (embed 成功 {ok})")
+
+        await db.commit()
+        print(f"\n完成。共重建 {total_chunks} 个 chunks。")
+
+
 async def main():
     if "--re-embed" in sys.argv:
         await re_embed_all()
+        return
+    if "--re-chunk" in sys.argv:
+        await re_chunk_all()
         return
 
     if not SAMPLES_DIR.exists():

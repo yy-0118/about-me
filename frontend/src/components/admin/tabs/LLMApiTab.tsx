@@ -435,7 +435,7 @@ export const LLMApiTab: React.FC = () => {
             value={form.llm_model}
             onChange={(e) => setForm({ ...form, llm_model: e.target.value })}
           />
-          <div className="admin-field__hint">DeepSeek: <code>deepseek-chat</code> / <code>deepseek-reasoner</code></div>
+          <div className="admin-field__hint">DeepSeek: <code>deepseek-v4-flash</code> / <code>deepseek-v4-pro</code></div>
         </div>
       </div>
 
