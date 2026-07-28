@@ -37,7 +37,6 @@ const RagPageInner: React.FC<Props> = ({ onBack, onEnterAdmin }) => {
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'light')
     const id = requestAnimationFrame(() => setPhase('idle'))
     return () => cancelAnimationFrame(id)
   }, [])

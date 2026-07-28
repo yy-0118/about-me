@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { useTheme } from '../contexts/ThemeContext'
 import './CoverPage.css'
 
 type Label = {
@@ -59,7 +58,6 @@ export const CoverPage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
   const [phase, setPhase] = useState<'enter' | 'idle' | 'exit'>('enter')
   const [ready, setReady] = useState(false)
   const [lineStyles, setLineStyles] = useState<LineStyle[]>(() => computeLineStyles())
-  const { setTheme } = useTheme()
 
   useEffect(() => {
     const update = () => setLineStyles(computeLineStyles())
@@ -69,13 +67,12 @@ export const CoverPage: React.FC<{ onEnter: () => void }> = ({ onEnter }) => {
   }, [])
 
   useEffect(() => {
-    setTheme('light')
     const t = window.setTimeout(() => {
       setPhase('idle')
       setReady(true)
     }, 2700)
     return () => window.clearTimeout(t)
-  }, [setTheme])
+  }, [])
 
   const handleClick = () => {
     if (!ready || phase === 'exit') return
