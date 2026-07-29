@@ -6,6 +6,7 @@ services:
     container_name: knowledge-rag-db
     restart: unless-stopped
     environment:
+      TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
       MYSQL_DATABASE: ${DB_NAME:-knowledge_rag}
     expose:
@@ -30,6 +31,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
+      TZ: Asia/Shanghai
       DB_TYPE: mysql
       DB_HOST: mysql
       DB_PORT: 3306
@@ -54,6 +56,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    environment:
+      TZ: Asia/Shanghai
     ports:
       - "80:80"
 
