@@ -20,6 +20,12 @@ DEFAULT_SETTINGS = {
     "embedding_model": "deepseek-embedding",
     "ai_style": "professional",
     "embedding_base_url": "https://api.deepseek.com",
+    # 封面自定义：空值表示沿用前端内置默认（About me / 提示语 / 13 个小字）
+    "cover_title": "",
+    "cover_hint": "",
+    "cover_labels": "",
+    "cover_bg_version": "",
+    "cover_line_width": "",
 }
 
 

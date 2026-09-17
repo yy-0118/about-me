@@ -40,13 +40,14 @@ def create_app() -> FastAPI:
         return JSONResponse({"status": "ok"})
 
     # 注册路由
-    from app.api import documents, chat, sessions, settings, auth, admin
+    from app.api import documents, chat, sessions, settings, auth, admin, cover
     app.include_router(documents.router)
     app.include_router(chat.router)
     app.include_router(sessions.router)
     app.include_router(settings.router)
     app.include_router(auth.router)
     app.include_router(admin.router)
+    app.include_router(cover.router)
 
     return app
 

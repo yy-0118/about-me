@@ -29,7 +29,7 @@
 }
 
 .cover-line-inner {
-  height: 1.48px;
+  height: 1.5px;
   background: rgba(20, 20, 20, 0.6);
   transform-origin: 0 50%;
   transform: scaleX(0);
@@ -269,5 +269,135 @@
   .cover-label {
     opacity: 1;
     transform: translate(-50%, -50%);
+  }
+}
+
+/* ============ 封面编辑：气泡按钮 / 提示 / 高亮 ============ */
+.cover-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+}
+
+.cover-page.is-editing {
+  cursor: default;
+}
+
+.cover-edit-bubble-wrap {
+  position: absolute;
+  right: max(26px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 20;
+  transition: opacity 0.2s ease-out;
+}
+
+.cover-edit-bubble-wrap.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cover-edit-bubble {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(20, 20, 20, 0.14);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.78);
+  color: #1a1a1a;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  transition: transform 0.16s ease-out, background 0.16s ease-out;
+}
+
+.cover-edit-bubble:hover {
+  background: #fff;
+  transform: translateY(-1px) scale(1.04);
+}
+
+.cover-edit-bubble:active {
+  transform: scale(0.96);
+}
+
+.cover-edit-bubble:focus-visible {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+.cover-label.is-active .cover-label-inner {
+  outline: 1px dashed rgba(74, 144, 226, 0.95);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* 编辑态：小字可以直接拖
+   （left/top 是百分比，所以只改这两项，不受文字入场动画影响） */
+.cover-label.is-editable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.cover-label.is-dragging {
+  cursor: grabbing;
+}
+
+.cover-label.is-dragging .cover-label-inner {
+  animation: none;
+}
+
+.cover-label:focus-visible .cover-label-inner {
+  outline: 2px solid #4a90e2;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.cover-label:focus {
+  outline: none;
+}
+
+.cover-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.86);
+  color: #fff;
+  font-size: 0.86rem;
+  z-index: 95;
+  animation: cover-toast-in 0.18s ease-out;
+}
+
+@keyframes cover-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 640px) {
+  .cover-edit-bubble-wrap {
+    right: 18px;
+    bottom: 18px;
+  }
+
+  .cover-toast {
+    bottom: 82px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-edit-bubble,
+  .cover-edit-bubble-wrap,
+  .cover-toast {
+    transition: none;
+    animation: none;
   }
 }

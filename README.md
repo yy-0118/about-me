@@ -13,6 +13,7 @@
 - 📚 **会话持久化**：每条对话自动入库，支持多会话切换
 - 🔍 **向量检索**：用户问题 → Embedding → 余弦相似度 → Top-K chunks → 注入 LLM 上下文
 - 📄 **多格式支持**：PDF / DOCX / Markdown / TXT 自动分块
+- 🎨 **封面自定义**：封面右下角气泡按钮 → 直接改主标题、提示语、连线小字（可拖动定位）、连线粗细与起止位置、背景图（改动实时预览，背景上传即生效；需管理员登录，配置存库）
 
 ### 管理后台
 - 📊 **系统概览**：文档 / chunk / 会话 / 消息实时统计
@@ -268,6 +269,8 @@ ADMIN_PASSWORD=change_me
 | Method | Path | 说明 |
 |---|---|---|
 | `GET` | `/api/settings` | 读取非敏感设置 |
+| `GET` | `/api/cover` | 封面配置（标题 / 提示语 / 连线小字 / 背景图版本） |
+| `GET` | `/api/cover/background` | 当前封面背景图（未上传过则 404 → 前端用内置默认图） |
 | `GET` | `/api/documents` | 文档列表 |
 | `POST` | `/api/chat` | **SSE** 流式问答（body: `{question, session_id?, top_k?}`） |
 | `*` | `/api/chat/sessions` | 会话 CRUD |
@@ -282,6 +285,8 @@ ADMIN_PASSWORD=change_me
 | `GET` | `/api/admin/stats` | 概览统计 |
 | `GET` | `/api/admin/questions` | 用户提问摘要 |
 | `GET` / `DELETE` | `/api/admin/sessions` & `/sessions/{id}` | 用户会话管理 |
+| `PUT` | `/api/cover` | 保存封面标题 / 提示语 / 连线小字 / 连线粗细 |
+| `POST` / `DELETE` | `/api/cover/background` | 上传自定义背景图 / 恢复默认背景 |
 
 完整 OpenAPI 文档：`http://localhost:8000/docs`
 

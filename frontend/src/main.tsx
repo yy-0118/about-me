@@ -19,7 +19,9 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const wasAdmin = prevAdminRef.current
     prevAdminRef.current = isAdmin
-    if (!wasAdmin && isAdmin) {
+    // 只在问答页（侧边栏的“管理员登录”）自动进后台；
+    // 封面页气泡登录后要接着编辑封面，不能被打断
+    if (!wasAdmin && isAdmin && currentPage === 'rag') {
       setCurrentPage('admin')
     } else if (wasAdmin && !isAdmin && currentPage === 'admin') {
       setCurrentPage('rag')

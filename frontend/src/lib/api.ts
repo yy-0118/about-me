@@ -17,6 +17,8 @@ import type {
   AdminSessionDetail,
   ClearResponse,
   TestConnectionResult,
+  CoverConfig,
+  CoverConfigUpdate,
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
@@ -297,3 +299,54 @@ export async function* chatStream(
 }
 
 export { ApiError, type ChatSource }
+
+// ============= 封面自定义 =============
+/** FastAPI 错误体形如 {"detail": "..."}，这里统一取成一句人话 */
+function readErrorMessage(raw: string, fallback: string): string {
+  if (!raw) return fallback
+  try {
+    const parsed = JSON.parse(raw)
+    if (typeof parsed?.detail === 'string') return parsed.detail
+    if (Array.isArray(parsed?.detail) && parsed.detail[0]?.msg) return parsed.detail[0].msg
+  } catch {
+    // 不是 JSON，直接用原文
+  }
+  return raw
+}
+
+export async function getCoverConfig(): Promise<CoverConfig> {
+  return request<CoverConfig>('/api/cover')
+}
+
+export async function updateCoverConfig(payload: CoverConfigUpdate): Promise<CoverConfig> {
+  return request<CoverConfig>(
+    '/api/cover',
+    { method: 'PUT', body: JSON.stringify(payload) },
+    true,
+  )
+}
+
+export async function uploadCoverBackground(file: File): Promise<CoverConfig> {
+  const form = new FormData()
+  form.append('file', file)
+  const token = getToken()
+  const resp = await fetch(`${API_BASE}/api/cover/background`, {
+    method: 'POST',
+    body: form,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '')
+    throw new ApiError(readErrorMessage(text, `HTTP ${resp.status}`), resp.status)
+  }
+  return (await resp.json()) as CoverConfig
+}
+
+export async function deleteCoverBackground(): Promise<CoverConfig> {
+  return request<CoverConfig>('/api/cover/background', { method: 'DELETE' }, true)
+}
+
+/** 自定义背景图地址；version 为空则返回空串（前端继续用内置默认图） */
+export function coverBackgroundUrl(version: string): string {
+  return version ? `${API_BASE}/api/cover/background?v=${encodeURIComponent(version)}` : ''
+}

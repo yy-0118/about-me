@@ -1,0 +1,366 @@
+/* 封面编辑面板：右侧抽屉，默认浅色（封面页恒为浅底） */
+.cover-editor {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(390px, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.16);
+  z-index: 90;
+  animation: cover-editor-in 0.18s ease-out;
+}
+
+@keyframes cover-editor-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.cover-editor__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cover-editor__head h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.cover-editor__sub {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.cover-editor__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.cover-editor__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cover-editor__section-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.cover-editor__hint {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.cover-editor__bg {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.cover-editor__bg-thumb {
+  width: 132px;
+  height: 88px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: #f1efe8;
+}
+
+.cover-editor__bg-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.cover-editor__file-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.cover-editor__file-btn:hover {
+  opacity: 0.9;
+}
+
+.cover-editor__file-btn.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cover-editor__ghost-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, opacity 0.12s;
+}
+
+.cover-editor__ghost-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.cover-editor__ghost-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cover-editor__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.cover-editor__label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px;
+  border-radius: 8px;
+}
+
+.cover-editor__label-row.is-active {
+  background: rgba(74, 144, 226, 0.09);
+}
+
+.cover-editor__label-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cover-editor__pos {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 固定高度：hover 时在“坐标 / 提示”之间切换内容，不再挤压下方列表
+     （否则鼠标正好在边界上会导致 hover 反复触发、界面抽搐） */
+  height: 20px;
+  overflow: hidden;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cover-editor__pos-name {
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cover-editor__pos-coord {
+  flex: 0 0 auto;
+}
+
+.cover-editor__pos--idle {
+  display: block;
+  line-height: 20px;
+  color: var(--text-secondary);
+  font-variant-numeric: normal;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 排版区的滑杆 */
+.cover-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cover-editor__field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.cover-editor__field-value {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cover-editor__range {
+  width: 100%;
+  height: 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.cover-editor__range:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 收起面板后的小悬浮条：放在左下角，避开常见的小字落点 */
+.cover-editor__mini {
+  position: fixed;
+  left: max(20px, env(safe-area-inset-left));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(340px, calc(100vw - 40px));
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  animation: cover-editor-in 0.18s ease-out;
+}
+
+.cover-editor__mini-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.cover-editor__label-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+.cover-editor__label-del {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.cover-editor__label-del:hover:not(:disabled) {
+  background: #d33;
+  border-color: #d33;
+  color: #fff;
+}
+
+.cover-editor__label-del:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cover-editor__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 20px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+}
+
+.cover-editor__foot-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .cover-editor__body {
+    padding: 16px;
+  }
+
+  .cover-editor__bg {
+    flex-direction: column;
+  }
+
+  .cover-editor__bg-thumb {
+    width: 100%;
+    height: 120px;
+  }
+
+  .cover-editor__bg-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .cover-editor__file-btn {
+    min-height: 42px;
+  }
+
+  .cover-editor__foot {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .cover-editor__foot-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cover-editor__foot-right .modal__btn {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .cover-editor__foot > .cover-editor__ghost-btn {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-editor {
+    animation: none;
+  }
+}

@@ -18,3 +18,9 @@ backend/.env
 
 # Build artifacts
 frontend/tsconfig.tsbuildinfo
+
+# 本地运行产生（不要提交）
+*.db
+*.sqlite
+*.sqlite3
+backend/uploads/cover/

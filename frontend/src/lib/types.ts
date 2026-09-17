@@ -169,6 +169,41 @@ export interface TestConnectionResult {
 
 export type AiStyle = 'professional' | 'friendly' | 'concise' | 'detailed' | 'free'
 
+// ============= 封面自定义 =============
+export interface CoverLabel {
+  text: string
+  x: number
+  y: number
+  hideStart?: number
+  hideEnd?: number
+}
+
+export interface CoverConfig {
+  title: string
+  hint: string
+  /** null 表示从未自定义过 → 前端使用内置默认小字 */
+  labels: CoverLabel[] | null
+  bg_version: string
+  custom_bg: boolean
+  /** 连线粗细(px)；null 表示用内置默认 */
+  line_width: number | null
+}
+
+export interface CoverConfigUpdate {
+  title: string
+  hint: string
+  labels: CoverLabel[] | null
+  line_width: number | null
+}
+
+/** 编辑中的封面草稿（labels 一定存在，位置/文字都可改） */
+export interface CoverDraft {
+  title: string
+  hint: string
+  labels: CoverLabel[]
+  lineWidth: number
+}
+
 export const AI_STYLE_OPTIONS: { value: AiStyle; label: string; hint: string }[] = [
   { value: 'professional', label: '专业严谨', hint: '适合文档知识库、企业知识' },
   { value: 'friendly', label: '友善亲切', hint: '适合个人助理、闲聊' },
