@@ -10,6 +10,7 @@ class DocumentResponse(BaseModel):
     file_size: int
     file_type: str
     chunk_count: int
+    enabled: bool = True
     created_at: datetime
 
     class Config:
@@ -19,6 +20,10 @@ class DocumentResponse(BaseModel):
 class DocumentListResponse(BaseModel):
     total: int
     items: list[DocumentResponse]
+
+
+class DocumentEnabledUpdate(BaseModel):
+    enabled: bool = Field(..., description="是否启用；关闭后该文档不参与问答检索")
 
 
 # -------- 删除结果 --------

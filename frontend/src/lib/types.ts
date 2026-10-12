@@ -4,6 +4,8 @@ export interface DocumentItem {
   file_size: number
   file_type: string
   chunk_count: number
+  /** 是否启用；关闭后不参与问答检索 */
+  enabled: boolean
   created_at: string
 }
 

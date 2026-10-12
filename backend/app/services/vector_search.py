@@ -32,6 +32,7 @@ class VectorSearchService:
             SELECT c.id, c.document_id, c.chunk_text, c.embedding, d.filename
             FROM chunks c
             JOIN documents d ON d.id = c.document_id
+            WHERE d.enabled = 1
         """)
         rows = (await db.execute(sql)).fetchall()
 

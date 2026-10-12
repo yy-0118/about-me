@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS documents (
   file_size   INT          DEFAULT 0 COMMENT '文件大小（字节）',
   file_type   VARCHAR(50)  DEFAULT '' COMMENT '文件类型扩展名',
   chunk_count INT          DEFAULT 0 COMMENT '分块数量',
+  enabled     TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '是否启用（0=关闭，关闭后不参与问答检索）',
   created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
   updated_at  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文档表';

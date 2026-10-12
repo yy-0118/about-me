@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, func, text
 from app.models import Base
 
 
@@ -11,5 +11,12 @@ class Document(Base):
     file_size = Column(Integer, default=0, comment="文件大小（字节）")
     file_type = Column(String(50), default="", comment="文件类型")
     chunk_count = Column(Integer, default=0, comment="分块数量")
+    enabled = Column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("1"),
+        comment="是否启用（关闭后不参与问答检索）",
+    )
     created_at = Column(DateTime, server_default=func.now(), comment="上传时间")
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间")

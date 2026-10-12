@@ -11,7 +11,14 @@ from app.models.chunk import Chunk
 from app.services.document_processor import extract_text, chunk_text, is_supported
 from app.services.embedding_service import EmbeddingService
 from app.services.setting_service import get_all_runtime_settings
-from app.schemas.document import DocumentResponse, DocumentListResponse, DeleteResponse, DocumentPreviewResponse, DocumentContentUpdate
+from app.schemas.document import (
+    DocumentResponse,
+    DocumentListResponse,
+    DeleteResponse,
+    DocumentPreviewResponse,
+    DocumentContentUpdate,
+    DocumentEnabledUpdate,
+)
 from app.auth import require_admin
 
 router = APIRouter(prefix="/api/documents", tags=["文档管理"])
@@ -178,6 +185,24 @@ async def update_document_content(
         file_type=doc.file_type,
         content=new_text,
     )
+
+
+@router.put("/{doc_id}/enabled", response_model=DocumentResponse, dependencies=[Depends(require_admin)])
+async def set_document_enabled(
+    doc_id: int, payload: DocumentEnabledUpdate, db: AsyncSession = Depends(get_db)
+):
+    """启用/关闭文档。关闭后文件、分块与向量都保留，只是问答检索时跳过该文档。"""
+    from sqlalchemy import select
+
+    result = await db.execute(select(Document).where(Document.id == doc_id))
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(404, "文档不存在")
+
+    doc.enabled = payload.enabled
+    await db.commit()
+    await db.refresh(doc)
+    return doc
 
 
 @router.delete("/{doc_id}", response_model=DeleteResponse, dependencies=[Depends(require_admin)])

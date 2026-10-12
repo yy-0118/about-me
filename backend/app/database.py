@@ -48,6 +48,28 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(_ensure_chat_session_owner_columns)
+        await conn.run_sync(_ensure_document_enabled_column)
+
+
+def _ensure_document_enabled_column(sync_conn):
+    """老库补列：documents.enabled（关闭后不参与问答检索）"""
+    inspector = inspect(sync_conn)
+    if "documents" not in inspector.get_table_names():
+        return
+
+    columns = {col["name"] for col in inspector.get_columns("documents")}
+    if "enabled" in columns:
+        return
+
+    dialect = sync_conn.dialect.name
+    if dialect == "mysql":
+        sync_conn.execute(text(
+            "ALTER TABLE documents ADD COLUMN enabled TINYINT(1) NOT NULL DEFAULT 1"
+        ))
+    else:
+        sync_conn.execute(text(
+            "ALTER TABLE documents ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1"
+        ))
 
 
 def _ensure_chat_session_owner_columns(sync_conn):

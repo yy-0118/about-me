@@ -119,7 +119,9 @@ export const DashboardTab: React.FC = () => {
                 </div>
                 <div>
                   <div className="info-card__title">文档管理</div>
-                  <div className="info-card__desc">上传、删除知识库文档；自动分块与向量化</div>
+                  <div className="info-card__desc">
+                    上传、启用/关闭、删除知识库文档；自动分块与向量化
+                  </div>
                 </div>
               </div>
               <div className="info-card">

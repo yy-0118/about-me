@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { deleteDocument, listDocuments, previewDocument, updateDocumentContent, uploadDocument } from '../../../lib/api'
+import {
+  deleteDocument,
+  listDocuments,
+  previewDocument,
+  setDocumentEnabled,
+  updateDocumentContent,
+  uploadDocument,
+} from '../../../lib/api'
 import type { DocumentItem, DocumentPreview } from '../../../lib/types'
 
 interface Props {
@@ -34,6 +41,7 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
   const [preview, setPreview] = useState<DocumentPreview | null>(null)
   const [previewLoadingId, setPreviewLoadingId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [togglingId, setTogglingId] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editContent, setEditContent] = useState('')
   const [editLoading, setEditLoading] = useState(false)
@@ -85,6 +93,23 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
       setError(e?.message || '删除失败')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleToggleEnabled = async (d: DocumentItem) => {
+    if (togglingId !== null) return
+    setTogglingId(d.id)
+    setError('')
+    setSuccess('')
+    try {
+      const updated = await setDocumentEnabled(d.id, !d.enabled)
+      setDocs((items) => items.map((item) => (item.id === updated.id ? updated : item)))
+      setSuccess(`已${updated.enabled ? '启用' : '关闭'}《${updated.filename}》`)
+      onChanged?.()
+    } catch (e: any) {
+      setError(e?.message || (d.enabled ? '关闭失败' : '启用失败'))
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -149,7 +174,9 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
       <div className="admin-tab__head">
         <div>
           <h2 className="admin-tab__title">文档管理</h2>
-          <p className="admin-tab__subtitle">上传、删除知识库文档；上传时会自动分块并生成向量</p>
+          <p className="admin-tab__subtitle">
+            上传、启用/关闭、删除知识库文档；上传时自动分块并生成向量，关闭后不再参与问答检索
+          </p>
         </div>
       </div>
 
@@ -224,14 +251,17 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
           {docs.map((d) => {
             const iconPath = FILE_ICONS[d.file_type] || FILE_ICONS.txt
             return (
-              <div key={d.id} className="doc-item">
+              <div key={d.id} className={`doc-item ${d.enabled ? '' : 'doc-item--disabled'}`}>
                 <div className="doc-item__icon">
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d={iconPath} />
                   </svg>
                 </div>
                 <div className="doc-item__info">
-                  <div className="doc-item__name">{d.filename}</div>
+                  <div className="doc-item__name">
+                    {d.filename}
+                    {!d.enabled && <span className="doc-item__badge">已关闭</span>}
+                  </div>
                   <div className="doc-item__meta">
                     <span>{fmtFileSize(d.file_size)}</span>
                     <span className="doc-item__meta-dot" />
@@ -243,6 +273,18 @@ export const DocumentsTab: React.FC<Props> = ({ onChanged }) => {
                   </div>
                 </div>
                 <div className="doc-item__actions">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={d.enabled}
+                    aria-label={d.enabled ? '关闭该文档' : '启用该文档'}
+                    title={d.enabled ? '点击关闭（不再参与问答检索）' : '点击启用'}
+                    className={`doc-item__switch ${d.enabled ? 'doc-item__switch--on' : ''}`}
+                    onClick={() => handleToggleEnabled(d)}
+                    disabled={togglingId === d.id}
+                  >
+                    <span className="doc-item__switch-knob" />
+                  </button>
                   <button
                     className="doc-item__preview"
                     onClick={() => handlePreview(d.id)}

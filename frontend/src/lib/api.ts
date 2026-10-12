@@ -94,6 +94,15 @@ export async function deleteDocument(id: number): Promise<void> {
   await request<{ message: string }>(`/api/documents/${id}`, { method: 'DELETE' }, true)
 }
 
+/** 启用/关闭文档（关闭后不参与问答检索，文件与向量都保留） */
+export async function setDocumentEnabled(id: number, enabled: boolean): Promise<DocumentItem> {
+  return request<DocumentItem>(
+    `/api/documents/${id}/enabled`,
+    { method: 'PUT', body: JSON.stringify({ enabled }) },
+    true,
+  )
+}
+
 // ============= 会话 =============
 export async function previewDocument(id: number): Promise<DocumentPreview> {
   return request<DocumentPreview>(`/api/documents/${id}/preview`, {}, true)
